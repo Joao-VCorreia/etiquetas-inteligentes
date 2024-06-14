@@ -49,7 +49,7 @@ def gerarPDF(dataframe, nomeArquivo):
     #tamanho das fontes
     tamanhosFonte = {
         'nome': 5.5*mm,
-        'identificacoes': 4.2*mm,
+        'identificacoes': 4*mm,
         'turno': 4*mm,
         'horario': 3.5*mm 
     }
@@ -66,16 +66,19 @@ def gerarPDF(dataframe, nomeArquivo):
         c.drawString(margemX, altura_pagina - 7*mm, str(row['nome']))
         
         c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 13*mm, f'Atendimento: {row['atendimento']}')
+        c.drawString(margemX, altura_pagina - 12*mm, f'Atendimento: {row['atendimento']}')
 
         c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 19*mm, f'Nascimento: {row['dataNascimento']}')
+        c.drawString(margemX, altura_pagina - 17*mm, f'Enfermaria: {row['enfermaria']}')
 
         c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 25*mm, f'Sexo: {row['sexo']}')
+        c.drawString(margemX, altura_pagina - 22*mm, f'Nascimento: {row['dataNascimento']}')
 
         c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 31*mm, f'Mãe: {row['maePaciente']}')
+        c.drawString(margemX, altura_pagina - 27*mm, f'Sexo: {row['sexo']}')
+
+        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
+        c.drawString(margemX, altura_pagina - 32*mm, f'Mãe: {row['maePaciente']}')
 
         if row['classe'] == 'psicotropico':
             c.saveState()
@@ -109,8 +112,6 @@ st.title('Gerador de etiquetas')
 horarioInicial = st.time_input('Horario Inicial', value=pd.to_datetime('00:00:00').time())
 horarioFinal = st.time_input('Horario Final', value=pd.to_datetime('23:59:59').time())
 inputExcluirMedicamentos = st.text_input("Medicamentos a desconsiderar (separados por vírgulas)", "")
-
-dfFormatado = dfProntuarios.copy()
 
 if st.button("Executar"):
     excluirMedicamentos = [med.strip() for med in inputExcluirMedicamentos.split(',')]

@@ -1,10 +1,19 @@
-
 import pandas as pd
 import numpy as np
 import random as rd
 from datetime import time
+import os
 
-dfPacientes = pd.read_csv(r"database\medical-records.csv")
+diretorioScript = os.path.dirname(__file__)
+
+#Base de dados disponivel em: https://www.kaggle.com/datasets/cankatsrc/medical-records-dataset
+caminhoMedicalRecords = os.path.join(diretorioScript, '../database/medical-records.csv')
+dfPacientes = pd.read_csv(caminhoMedicalRecords)
+
+#Base de dados disponivel em: https://www.kaggle.com/datasets/rupindersinghrana/gender-by-name
+caminhoNameDataset = os.path.join(diretorioScript, '../database/name_gender_dataset.csv')
+dfMaePaciente = pd.read_csv(caminhoNameDataset, usecols=['Name', 'Gender']).iloc[:1000]
+dfMaePaciente = dfMaePaciente[dfMaePaciente['Gender'] == 'F'][['Name']].reset_index(drop=True)
 
 #Intervalo de Pacientes
 dfPacientes = dfPacientes.iloc[:500]
@@ -61,7 +70,17 @@ dfPacientesMedicamentos['horario'] = [time(hour=h) for h in np.random.choice(ran
 #Simula um numero de atendimento para cada paciente
 nomesPacientes = dfPacientesMedicamentos['nome'].unique()
 numeroAtendimento = {nome: np.random.randint(10000000, 99999999) for nome in nomesPacientes}
-
 dfPacientesMedicamentos['atendimento'] = dfPacientesMedicamentos['nome'].map(numeroAtendimento)
 
-dfPacientesMedicamentos.to_parquet('database/banco-de-dados.parquet')
+#Simula o nome das maes de cada paciente
+nomeMaes = dfMaePaciente['Name'].to_list()
+maePaciente = {nome: np.random.choice(nomeMaes) + ' ' + np.random.choice(nomeMaes) for nome in nomesPacientes}
+dfPacientesMedicamentos['maePaciente'] = dfPacientesMedicamentos['nome'].map(maePaciente)
+
+#Simula a enfermaria onde o paciente esta
+enfermarias = ['UTI A', 'UTI B', 'UTI C', 'Internação 1', 'Internação 2', 'Internação 3', 'Internação 4']
+enfermariaPaciente = {nome: np.random.choice(enfermarias) for nome in nomesPacientes}
+dfPacientesMedicamentos['enfermaria'] = dfPacientesMedicamentos['nome'].map(enfermariaPaciente)
+
+caminhoParquet = os.path.join(diretorioScript, 'banco-de-daos.parquet')
+dfPacientesMedicamentos.to_parquet(caminhoParquet)
