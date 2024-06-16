@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from datetime import datetime, timedelta, time
 import os
 import webbrowser
 
@@ -10,18 +11,25 @@ diretorioScript = os.path.dirname(__file__)
 caminhoParquet = os.path.join(diretorioScript, '../database/banco-de-dados.parquet')
 dfProntuarios = pd.read_parquet(caminhoParquet)
 
+#Ordena os horarios de maneira crescente sem alterar a ordem dos pacientes
+dfProntuarios = dfProntuarios.groupby('nome', group_keys=False).apply(lambda x: x.sort_values('horario'))
+
 #Funcao para aplicar filtro de horarios
 @st.cache_resource()
-def aplicarFiltros(dfIn,horarioInicial, horarioFinal, excluirMedicamentos):
+def aplicarFiltros(dfIn, horarioInicial, horarioFinal, excluirMedicamentos):
+    # Se o horário final é menor que o inicial, significa que passou da meia-noite
+    if horarioFinal < horarioInicial:
+        # Máscara de horário para considerar a transição de dias
+        maskHorario = ((dfIn['horario'] >= horarioInicial) & (dfIn['horario'] <= time(23, 59, 59))) | \
+                      ((dfIn['horario'] >= time(0, 0)) & (dfIn['horario'] <= horarioFinal))
+    else:
+        maskHorario = (dfIn['horario'] >= horarioInicial) & (dfIn['horario'] <= horarioFinal)
 
-   maskHorario = (dfIn['horario'] >= horarioInicial) & (dfIn['horario'] <= horarioFinal)
-   maskMedicamentos = ~dfIn['medicacao'].isin(excluirMedicamentos)
+    maskMedicamentos = ~dfIn['medicacao'].isin(excluirMedicamentos)
+    dfOut = dfIn[maskHorario & maskMedicamentos]
+    dfOut = dfOut.drop_duplicates(subset=['nome', 'classe', 'horario'])
 
-   dfOut = dfIn[maskHorario & maskMedicamentos]
-
-   dfOut = dfOut.drop_duplicates(subset=['nome', 'classe', 'horario'])
-
-   return dfOut
+    return dfOut
 
 #Funcao para identificar o turno da medicacao
 def determinarTurno(horario):
@@ -109,8 +117,27 @@ def gerarPDF(dataframe, nomeArquivo):
 
 st.title('Gerador de etiquetas')
 
-horarioInicial = st.time_input('Horario Inicial', value=pd.to_datetime('00:00:00').time())
-horarioFinal = st.time_input('Horario Final', value=pd.to_datetime('23:59:59').time())
+#Dicionario com intervalo de Turnos
+turnos = {
+    'T1 - 20:00 às 01:59': (time(20, 0), time(1, 59, 59)),
+    'T2 - 02:00 às 07:59': (time(2, 0), time(7, 59, 59)),
+    'T3 - 08:00 às 13:59': (time(8, 0), time(13, 59, 59)),
+    'T4 - 14:00 às 19:59': (time(14, 0), time(19, 59, 59))
+}
+
+# Preferencia de selecao
+opcaoTurno = st.radio("Escolha o turno ou defina um horário específico:", ('Turno', 'Horário Específico'))
+
+# Se o usuário escolher turno, ele pode selecionar um dos turnos pré-definidos
+if opcaoTurno == 'Turno':
+    turnoSelecionado = st.selectbox("Selecione o turno:", list(turnos.keys()))
+    horarioInicial, horarioFinal = turnos[turnoSelecionado]
+else:
+    # Se o usuário escolher horário específico, ele pode definir os horários inicial e final
+    horarioInicial = st.time_input('Horario Inicial', value=pd.to_datetime('00:00:00').time())
+    horarioFinal = st.time_input('Horario Final', value=pd.to_datetime('23:59:59').time())
+
+#lista de medicamentos a desconsiderar
 inputExcluirMedicamentos = st.text_input("Medicamentos a desconsiderar (separados por vírgulas)", "")
 
 if st.button("Executar"):
@@ -124,10 +151,11 @@ if st.button("Executar"):
     dfFormatado.loc[:, 'sexo'] = dfFormatado['sexo'].replace({'F': 'Feminino', 'M': 'Masculino'})
     dfFormatado.loc[:, 'horario'] = dfFormatado['horario'].apply(converterHorario)
 
+    #gerando e salvando etiquetas
     caminhoPDF = os.path.join(diretorioScript, 'etiquetas.pdf')
     gerarPDF(dfFormatado, caminhoPDF)
 
     st.success('Etiquetas geradas com sucesso!')
-    st.write("As etiquetas foram geradas e salvas no arquivo 'etiquetas.pdf'.")
 
+    #Abrindo arquivo em uma nova pagina
     webbrowser.open_new_tab(caminhoPDF)

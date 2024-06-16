@@ -82,5 +82,5 @@ enfermarias = ['UTI A', 'UTI B', 'UTI C', 'Internação 1', 'Internação 2', 'I
 enfermariaPaciente = {nome: np.random.choice(enfermarias) for nome in nomesPacientes}
 dfPacientesMedicamentos['enfermaria'] = dfPacientesMedicamentos['nome'].map(enfermariaPaciente)
 
-caminhoParquet = os.path.join(diretorioScript, 'banco-de-daos.parquet')
+caminhoParquet = os.path.join(diretorioScript, 'banco-de-dados.parquet')
 dfPacientesMedicamentos.to_parquet(caminhoParquet)
