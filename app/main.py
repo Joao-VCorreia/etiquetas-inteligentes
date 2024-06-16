@@ -11,7 +11,7 @@ diretorioScript = os.path.dirname(__file__)
 caminhoParquet = os.path.join(diretorioScript, '../database/banco-de-dados.parquet')
 dfProntuarios = pd.read_parquet(caminhoParquet)
 
-#Ordena os horarios de maneira crescente sem alterar a ordem dos pacientes
+#Ordena os horarios de maneira crescente
 dfProntuarios = dfProntuarios.groupby('nome', group_keys=False).apply(lambda x: x.sort_values('horario'))
 
 #Funcao para aplicar filtro de horarios
