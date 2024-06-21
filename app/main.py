@@ -48,73 +48,41 @@ def converterHorario(horario):
 
 #Geracao das etiquetas
 def gerarPDF(dataframe, nomeArquivo):
-
-    #Dimensoes da pagina
     largura_pagina, altura_pagina = 100*mm, 35*mm
+    margemX = 3*mm
 
     c = canvas.Canvas(nomeArquivo, pagesize=(largura_pagina, altura_pagina))
 
-    #tamanho das fontes
-    tamanhosFonte = {
-        'nome': 5.5*mm,
-        'identificacoes': 4*mm,
-        'turno': 4*mm,
-        'horario': 3.5*mm 
-    }
-    
-    #Margem horizontal
-    margemX = 3*mm
-
-    #Impressao dos dados
     for _, row in dataframe.iterrows():
-        
         c.setLineWidth(2)
-
-        c.setFont("Helvetica-Bold",tamanhosFonte['nome'])
+        c.setFont("Helvetica-Bold", 5.5*mm)
         c.drawString(margemX, altura_pagina - 7*mm, str(row['nome']))
-        
-        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 12*mm, f'Atendimento: {row['atendimento']}')
-
-        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 17*mm, f'Enfermaria: {row['enfermaria']}')
-
-        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 22*mm, f'Nascimento: {row['dataNascimento']}')
-
-        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 27*mm, f'Sexo: {row['sexo']}')
-
-        c.setFont("Helvetica",tamanhosFonte['identificacoes'])
-        c.drawString(margemX, altura_pagina - 32*mm, f'Mãe: {row['maePaciente']}')
+        c.setFont("Helvetica", 4*mm)
+        c.drawString(margemX, altura_pagina - 12*mm, f"Atendimento: {row['atendimento']}")
+        c.drawString(margemX, altura_pagina - 17*mm, f"Enfermaria: {row['enfermaria']}")
+        c.drawString(margemX, altura_pagina - 22*mm, f"Nascimento: {row['dataNascimento']}")
+        c.drawString(margemX, altura_pagina - 27*mm, f"Sexo: {row['sexo']}")
+        c.drawString(margemX, altura_pagina - 32*mm, f"Mãe: {row['maePaciente']}")
 
         if row['classe'] == 'psicotropico':
             c.saveState()
-
             c.setFont("Helvetica-Bold", 3*mm)
             c.rotate(90)
-            c.drawString(12*mm, -74.5*mm,'psico')
-
+            c.drawString(12*mm, -74.5*mm, 'psico')
             c.restoreState()
-
             c.roundRect(76*mm, 5*mm, 18*mm, 20*mm, 5*mm, stroke=1, fill=0)
-            c.setLineWidth(1)
         elif row['classe'] == 'normal':
-            c.circle(85*mm, altura_pagina - (20*mm), 10*mm, stroke=1, fill=0)
-            c.setLineWidth(1)
-            
-        c.setFont("Helvetica-Bold",tamanhosFonte['turno'])
-        c.drawString(83*mm, altura_pagina - (18*mm), str(row['turno']))
+            c.circle(85*mm, altura_pagina - 20*mm, 10*mm, stroke=1, fill=0)
 
+        c.setFont("Helvetica-Bold", 4*mm)
+        c.drawString(83*mm, altura_pagina - 18*mm, str(row['turno']))
         c.line(78*mm, 15*mm, 92*mm, 15*mm)
-
-        c.setFont("Helvetica-Bold",tamanhosFonte['horario'])
-        c.drawString(79*mm, altura_pagina - (25*mm), str(row['horario']))
-      
+        c.setFont("Helvetica-Bold", 3.5*mm)
+        c.drawString(79*mm, altura_pagina - 25*mm, str(row['horario']))
         c.showPage()
 
     c.save()
-
+    
 st.title('Gerador de etiquetas')
 
 #Dicionario com intervalo de Turnos
